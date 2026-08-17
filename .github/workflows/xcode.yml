@@ -1,6 +1,7 @@
-﻿name: macOS Xcode Test
+﻿name: Xcode Playground
 
 on:
+
   push:
     branches:
       - main
@@ -8,73 +9,135 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+
+  playground:
+
     runs-on: macos-latest
 
     steps:
 
+      # ------------------------------------------------------
+      # CHECKOUT
+      # ------------------------------------------------------
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ------------------------------------------------------
+      # MACOS
+      # ------------------------------------------------------
+
       - name: Show macOS
         run: |
-          echo "===== macOS ====="
+          echo "======================================"
+          echo " macOS INFORMATION"
+          echo "======================================"
           sw_vers
+
+      # ------------------------------------------------------
+      # XCODE
+      # ------------------------------------------------------
 
       - name: Show Xcode
         run: |
-          echo "===== Xcode ====="
+          echo "======================================"
+          echo " XCODE INFORMATION"
+          echo "======================================"
           xcodebuild -version
+
+      # ------------------------------------------------------
+      # SWIFT
+      # ------------------------------------------------------
 
       - name: Show Swift
         run: |
-          echo "===== Swift ====="
+          echo "======================================"
+          echo " SWIFT INFORMATION"
+          echo "======================================"
           swift --version
 
-      - name: Verify repository
+      # ------------------------------------------------------
+      # PLAYGROUND
+      # ------------------------------------------------------
+
+      - name: Check Playground
         run: |
-          echo "===== Current directory ====="
-          pwd
+          echo "======================================"
+          echo " PLAYGROUND FILES"
+          echo "======================================"
 
-          echo "===== Files ====="
-          find . -maxdepth 3 -type f | sort
+          find MyPlayground.playground \
+            -maxdepth 2 \
+            -type f \
+            -print
 
-      - name: Verify Package.swift
+      # ------------------------------------------------------
+      # DISPLAY SOURCE
+      # ------------------------------------------------------
+
+      - name: Show Playground source
         run: |
-          echo "===== Package.swift ====="
+          echo "======================================"
+          echo " CONTENTS.SWIFT"
+          echo "======================================"
 
-          if [ -f Package.swift ]; then
-            cat Package.swift
-          else
-            echo "Package.swift not found"
-          fi
+          cat MyPlayground.playground/Contents.swift
 
-      - name: Build Swift source directly
+      # ------------------------------------------------------
+      # EXECUTE PLAYGROUND
+      # ------------------------------------------------------
+
+      - name: Execute Playground
         run: |
-          mkdir -p build
 
-          swiftc \
-            Sources/MyApp/MyApp.swift \
-            -o build/MyApp
+          mkdir -p output
 
-      - name: Run Swift program
+          echo "======================================"
+          echo " PLAYGROUND OUTPUT"
+          echo "======================================"
+
+          swift \
+            MyPlayground.playground/Contents.swift \
+            2>&1 | tee output/playground-output.txt
+
+      # ------------------------------------------------------
+      # SAVE ENVIRONMENT
+      # ------------------------------------------------------
+
+      - name: Save environment information
         run: |
-          ./build/MyApp || true
 
-      - name: Create artifacts
+          mkdir -p output
+
+          sw_vers \
+            > output/macos.txt
+
+          xcodebuild -version \
+            > output/xcode.txt
+
+          swift --version \
+            > output/swift.txt
+
+      # ------------------------------------------------------
+      # COPY PLAYGROUND
+      # ------------------------------------------------------
+
+      - name: Copy Playground
         run: |
-          mkdir -p artifacts
 
-          sw_vers > artifacts/macos.txt
+          cp -R \
+            MyPlayground.playground \
+            output/MyPlayground.playground
 
-          xcodebuild -version > artifacts/xcode.txt
+      # ------------------------------------------------------
+      # UPLOAD
+      # ------------------------------------------------------
 
-          swift --version > artifacts/swift.txt
-
-          cp Sources/MyApp/MyApp.swift artifacts/MyApp.swift
-
-      - name: Upload artifacts
+      - name: Upload Playground artifacts
         uses: actions/upload-artifact@v4
+
         with:
-          name: macos-xcode-test
-          path: artifacts/
+
+          name: MyPlayground-macOS
+
+          path: output/
