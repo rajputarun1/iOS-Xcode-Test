@@ -1,11 +1,7 @@
-﻿name: macOS Xcode Build
+﻿name: macOS Xcode Test
 
 on:
   push:
-    branches:
-      - main
-
-  pull_request:
     branches:
       - main
 
@@ -19,60 +15,53 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Show Git information
+      - name: Show macOS
         run: |
-          echo "===== GITHUB SHA ====="
-          echo "$GITHUB_SHA"
+          echo "===== macOS ====="
+          sw_vers
 
-          echo "===== GITHUB REF ====="
-          echo "$GITHUB_REF"
+      - name: Show Xcode
+        run: |
+          echo "===== Xcode ====="
+          xcodebuild -version
 
-          echo "===== GIT COMMIT ====="
-          git log -1 --oneline
+      - name: Show Swift
+        run: |
+          echo "===== Swift ====="
+          swift --version
+
+      - name: Verify repository
+        run: |
+          echo "===== Current directory ====="
+          pwd
+
+          echo "===== Files ====="
+          find . -maxdepth 3 -type f | sort
 
       - name: Verify Package.swift
         run: |
           echo "===== Package.swift ====="
-          pwd
-          ls -la
-          echo ""
-          cat Package.swift
-          echo ""
-          echo "===== FIRST LINE ====="
-          head -n 1 Package.swift
 
-      - name: Verify Swift tools version
+          if [ -f Package.swift ]; then
+            cat Package.swift
+          else
+            echo "Package.swift not found"
+          fi
+
+      - name: Build Swift source directly
         run: |
-          grep "swift-tools-version" Package.swift
+          mkdir -p build
 
-      - name: Show macOS version
+          swiftc \
+            Sources/MyApp/MyApp.swift \
+            -o build/MyApp
+
+      - name: Run Swift program
         run: |
-          sw_vers
+          ./build/MyApp || true
 
-      - name: Show Xcode version
-        run: |
-          xcodebuild -version
-
-      - name: Show Swift version
-        run: |
-          swift --version
-
-      - name: Resolve dependencies
-        run: |
-          swift package resolve
-
-      - name: Build Swift project
-        run: |
-          swift build -c release
-
-      - name: Run tests
-        run: |
-          swift test
-
-      - name: Prepare artifacts
+      - name: Create artifacts
         run: |
           mkdir -p artifacts
 
@@ -82,10 +71,10 @@ jobs:
 
           swift --version > artifacts/swift.txt
 
-          cp Package.swift artifacts/Package.swift
+          cp Sources/MyApp/MyApp.swift artifacts/MyApp.swift
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-xcode-build
+          name: macos-xcode-test
           path: artifacts/

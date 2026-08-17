@@ -1,10 +1,10 @@
 ﻿import Foundation
 
-public struct MyApp {
+struct MyApp {
 
-    public init() {}
-
-    public func message() -> String {
-        return "Hello from Xcode on macOS!"
+    static func message() -> String {
+        return "Hello from macOS Xcode!"
     }
 }
+
+print(MyApp.message())
