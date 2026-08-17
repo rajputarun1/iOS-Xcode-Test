@@ -1,13 +1,11 @@
-﻿// swift-tools-version: 5.9
+﻿// swift-tools-version: 6.3
 
 import PackageDescription
 
 let package = Package(
-
     name: "MyApp",
 
     products: [
-
         .library(
             name: "MyApp",
             targets: ["MyApp"]
@@ -15,7 +13,6 @@ let package = Package(
     ],
 
     targets: [
-
         .target(
             name: "MyApp"
         ),
