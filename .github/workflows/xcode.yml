@@ -1,7 +1,6 @@
 ﻿name: macOS Xcode Build
 
 on:
-
   push:
     branches:
       - main
@@ -13,43 +12,53 @@ on:
   workflow_dispatch:
 
 jobs:
-
   build:
-
     runs-on: macos-latest
 
     steps:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show Git information
+        run: |
+          echo "===== GITHUB SHA ====="
+          echo "$GITHUB_SHA"
+
+          echo "===== GITHUB REF ====="
+          echo "$GITHUB_REF"
+
+          echo "===== GIT COMMIT ====="
+          git log -1 --oneline
+
+      - name: Verify Package.swift
+        run: |
+          echo "===== Package.swift ====="
+          pwd
+          ls -la
+          echo ""
+          cat Package.swift
+          echo ""
+          echo "===== FIRST LINE ====="
+          head -n 1 Package.swift
+
+      - name: Verify Swift tools version
+        run: |
+          grep "swift-tools-version" Package.swift
 
       - name: Show macOS version
         run: |
-          echo "=============================="
-          echo "macOS"
-          echo "=============================="
           sw_vers
 
       - name: Show Xcode version
         run: |
-          echo "=============================="
-          echo "Xcode"
-          echo "=============================="
           xcodebuild -version
 
       - name: Show Swift version
         run: |
-          echo "=============================="
-          echo "Swift"
-          echo "=============================="
           swift --version
-
-      - name: Show available Xcode
-        run: |
-          echo "=============================="
-          echo "Available Xcode"
-          echo "=============================="
-          ls -la /Applications | grep -i Xcode || true
 
       - name: Resolve dependencies
         run: |
@@ -67,21 +76,16 @@ jobs:
         run: |
           mkdir -p artifacts
 
-      - name: Save macOS information
-        run: |
           sw_vers > artifacts/macos.txt
 
-      - name: Save Xcode information
-        run: |
           xcodebuild -version > artifacts/xcode.txt
 
-      - name: Save Swift information
-        run: |
           swift --version > artifacts/swift.txt
+
+          cp Package.swift artifacts/Package.swift
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
-
         with:
           name: macos-xcode-build
           path: artifacts/
